@@ -104,6 +104,8 @@ Endpoint for fetching Pokemon with pagination and conditional search functionali
 - `search` (string): Optional search term for filtering by name, type, or description
 - `type` (string): Optional comma-separated list of types to filter by (e.g. `Fire,Water`). A Pokemon matches if it has any of the listed types
 - `{stat}Min` / `{stat}Max` (number): Optional range filters, where `{stat}` is one of `generation`, `height`, `weight`, `hp`, `attack`, `defense`, `speed` (e.g. `attackMin=50&attackMax=120`)
+- `sortBy` (string): Optional field to sort by, one of the same 7 stat fields above
+- `sortOrder` (string): Sort direction when `sortBy` is set, `asc` (default) or `desc`
 
 **Response:**
 

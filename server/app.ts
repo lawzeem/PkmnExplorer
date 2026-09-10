@@ -49,6 +49,18 @@ app.get('/api/pokemon', (req, res) => {
     })
   }
 
+  const sortBy = req.query.sortBy as string | undefined
+  const sortField = STAT_FILTER_CONFIG.find(
+    config => config.field === sortBy
+  )?.field
+  const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1
+
+  if (sortField) {
+    filteredPokemon = [...filteredPokemon].sort(
+      (a, b) => (a[sortField] - b[sortField]) * sortOrder
+    )
+  }
+
   const total = filteredPokemon.length
   const totalPages = Math.ceil(total / limit)
   const startIndex = (page - 1) * limit

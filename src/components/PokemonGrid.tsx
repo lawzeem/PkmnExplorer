@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import type { StatRanges } from '@/lib/statFilters'
+import type { SortState, StatRanges } from '@/lib/statFilters'
 
 import { PokemonCard } from '@/components/PokemonCard'
 import { PokemonCardSkeleton } from '@/components/PokemonCardSkeleton'
@@ -35,9 +35,10 @@ export default function PokemonGrid() {
     getDefaultStatRanges()
   )
   const debouncedStatRanges = useDebouncedValue(statRanges, 300)
+  const [sort, setSort] = useState<SortState>(null)
 
   const { error, hasNext, isLoading, items, loadMore, retry } =
-    usePokemonList(debouncedSearch, selectedTypes, debouncedStatRanges)
+    usePokemonList(debouncedSearch, selectedTypes, debouncedStatRanges, sort)
 
   const sentinelRef = useInfiniteScrollSentinel(
     loadMore,
@@ -48,7 +49,12 @@ export default function PokemonGrid() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4 sm:p-6">
-      <StatFilterButton onChange={setStatRanges} statRanges={statRanges} />
+      <StatFilterButton
+        onChange={setStatRanges}
+        onSortChange={setSort}
+        sort={sort}
+        statRanges={statRanges}
+      />
 
       <div className="flex flex-col gap-3">
         <Input

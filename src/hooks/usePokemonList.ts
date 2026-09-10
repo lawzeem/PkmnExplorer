@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { StatRanges } from '@/lib/statFilters'
+import type { SortState, StatRanges } from '@/lib/statFilters'
 import type { Pokemon, PokemonPage } from '@/lib/types'
 
 import { isStatRangeActive, STAT_FILTER_CONFIG } from '@/lib/statFilters'
@@ -10,7 +10,8 @@ const PAGE_SIZE = 24
 export function usePokemonList(
   search: string,
   types: string[],
-  statRanges: StatRanges
+  statRanges: StatRanges,
+  sort: SortState
 ) {
   const [items, setItems] = useState<Pokemon[]>([])
   const [page, setPage] = useState(1)
@@ -52,6 +53,11 @@ export function usePokemonList(
             params.set(`${config.field}Max`, String(range[1]))
         }
 
+        if (sort) {
+          params.set('sortBy', sort.field)
+          params.set('sortOrder', sort.order)
+        }
+
         const response = await fetch(`/api/pokemon?${params.toString()}`, {
           signal: controller.signal
         })
@@ -70,7 +76,7 @@ export function usePokemonList(
         if (abortControllerRef.current === controller) setIsLoading(false)
       }
     },
-    [search, types, statRanges]
+    [search, types, statRanges, sort]
   )
 
   useEffect(() => {

@@ -40,7 +40,17 @@ export const STAT_FILTER_CONFIG: StatFilterConfig[] = [
   { field: 'speed', label: 'Speed', max: 200, min: 5, step: 1 }
 ]
 
+export type SortOrder = 'asc' | 'desc'
+
+export type SortState = null | { field: StatField; order: SortOrder }
+
 export type StatRanges = Record<StatField, [number, number]>
+
+export function cycleSort(current: SortState, field: StatField): SortState {
+  if (!current || current.field !== field) return { field, order: 'asc' }
+  if (current.order === 'asc') return { field, order: 'desc' }
+  return null
+}
 
 export function getDefaultStatRanges(): StatRanges {
   const entries = STAT_FILTER_CONFIG.map(
