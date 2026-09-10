@@ -1,56 +1,87 @@
-import { Input } from './ui/input'
+import { useState } from 'react'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type Pokemon = {
-  attack: number
-  defense: number
-  description: string
-  generation: number
-  height: number
-  hp: number
-  id: number
-  imageUrl: string
-  isLegendary?: boolean
-  name: string
-  specialAttack: number
-  specialDefense: number
-  speed: number
-  types: string[]
-  weight: number
-}
+import { PokemonCard } from '@/components/PokemonCard'
+import { PokemonCardSkeleton } from '@/components/PokemonCardSkeleton'
+import { Input } from '@/components/ui/input'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { useInfiniteScrollSentinel } from '@/hooks/useInfiniteScrollSentinel'
+import { usePokemonList } from '@/hooks/usePokemonList'
 
-const colors: Record<string, string> = {
-  Bug: 'bg-lime-500 hover:bg-lime-600',
-  Dark: 'bg-slate-800 hover:bg-slate-900',
-  Dragon: 'bg-indigo-700 hover:bg-indigo-800',
-  Electric: 'bg-yellow-500 hover:bg-yellow-600',
-  Fairy: 'bg-pink-300 hover:bg-pink-400',
-  Fighting: 'bg-red-700 hover:bg-red-800',
-  Fire: 'bg-red-500 hover:bg-red-600',
-  Flying: 'bg-indigo-400 hover:bg-indigo-500',
-  Ghost: 'bg-purple-700 hover:bg-purple-800',
-  Grass: 'bg-green-500 hover:bg-green-600',
-  Ground: 'bg-amber-600 hover:bg-amber-700',
-  Ice: 'bg-cyan-300 hover:bg-cyan-400',
-  Normal: 'bg-slate-400 hover:bg-slate-500',
-  Poison: 'bg-purple-500 hover:bg-purple-600',
-  Psychic: 'bg-pink-500 hover:bg-pink-600',
-  Rock: 'bg-amber-700 hover:bg-amber-800',
-  Steel: 'bg-slate-500 hover:bg-slate-600',
-  Water: 'bg-blue-500 hover:bg-blue-600'
-}
-
-// just a little helper guy
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getTypeColor = (type: string) => {
-  return colors[type] || 'bg-slate-400 hover:bg-slate-500'
-}
+const SKELETON_COUNT = 8
+const SKELETON_KEYS = Array.from(
+  { length: SKELETON_COUNT },
+  (_, index) => `skeleton-${index}`
+)
 
 export default function PokemonGrid() {
+  const [searchInput, setSearchInput] = useState('')
+  const debouncedSearch = useDebouncedValue(searchInput, 300)
+
+  const { error, hasNext, isLoading, items, loadMore, retry } =
+    usePokemonList(debouncedSearch)
+
+  const sentinelRef = useInfiniteScrollSentinel(
+    loadMore,
+    hasNext && !isLoading
+  )
+
+  const isInitialLoad = isLoading && items.length === 0
+
   return (
-    <div>
-      <Input placeholder="Search" type="text" />
-      <div>Pokemon Grid</div>
+    <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4 sm:p-6">
+      <Input
+        onChange={event => setSearchInput(event.target.value)}
+        placeholder="Search by name, type, or description..."
+        type="text"
+        value={searchInput}
+      />
+
+      {error && (
+        <div className="border-destructive/50 text-destructive flex flex-col items-center gap-2 rounded-md border p-6 text-center text-sm">
+          <p>{error}</p>
+          <button
+            className="border-input hover:bg-accent rounded-md border px-3 py-1.5 text-sm font-medium"
+            onClick={retry}
+            type="button"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!error && !isInitialLoad && items.length === 0 && (
+        <p className="text-muted-foreground py-12 text-center text-sm">
+          {debouncedSearch
+            ? `No Pokemon found for "${debouncedSearch}".`
+            : 'No Pokemon found.'}
+        </p>
+      )}
+
+      {!error && (items.length > 0 || isInitialLoad) && (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+          {items.map(pokemon => (
+            <PokemonCard key={pokemon.id} pokemon={pokemon} />
+          ))}
+          {isInitialLoad &&
+            SKELETON_KEYS.map(key => <PokemonCardSkeleton key={key} />)}
+        </div>
+      )}
+
+      {!error && !isInitialLoad && hasNext && (
+        <div className="flex justify-center py-4" ref={sentinelRef}>
+          {isLoading && (
+            <span className="text-muted-foreground text-sm">
+              Loading more...
+            </span>
+          )}
+        </div>
+      )}
+
+      {!error && !isInitialLoad && !hasNext && items.length > 0 && (
+        <p className="text-muted-foreground py-4 text-center text-sm">
+          You've caught them all!
+        </p>
+      )}
     </div>
   )
 }
