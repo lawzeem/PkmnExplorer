@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import type { StatRanges } from '@/lib/statFilters'
 import type { Pokemon, PokemonPage } from '@/lib/types'
+
+import { isStatRangeActive, STAT_FILTER_CONFIG } from '@/lib/statFilters'
 
 const PAGE_SIZE = 24
 
-export function usePokemonList(search: string) {
+export function usePokemonList(
+  search: string,
+  types: string[],
+  statRanges: StatRanges
+) {
   const [items, setItems] = useState<Pokemon[]>([])
   const [page, setPage] = useState(1)
   const [hasNext, setHasNext] = useState(false)
@@ -34,6 +41,16 @@ export function usePokemonList(search: string) {
           page: String(pageToFetch)
         })
         if (search) params.set('search', search)
+        if (types.length > 0) params.set('type', types.join(','))
+
+        for (const config of STAT_FILTER_CONFIG) {
+          const range = statRanges[config.field]
+          if (!isStatRangeActive(config, range)) continue
+          if (range[0] > config.min)
+            params.set(`${config.field}Min`, String(range[0]))
+          if (range[1] < config.max)
+            params.set(`${config.field}Max`, String(range[1]))
+        }
 
         const response = await fetch(`/api/pokemon?${params.toString()}`, {
           signal: controller.signal
@@ -53,7 +70,7 @@ export function usePokemonList(search: string) {
         if (abortControllerRef.current === controller) setIsLoading(false)
       }
     },
-    [search]
+    [search, types, statRanges]
   )
 
   useEffect(() => {

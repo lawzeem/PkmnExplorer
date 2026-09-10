@@ -1,11 +1,16 @@
 import { useState } from 'react'
 
+import type { StatRanges } from '@/lib/statFilters'
+
 import { PokemonCard } from '@/components/PokemonCard'
 import { PokemonCardSkeleton } from '@/components/PokemonCardSkeleton'
+import { StatFilterButton } from '@/components/StatFilterButton'
+import { TypeFilterPills } from '@/components/TypeFilterPills'
 import { Input } from '@/components/ui/input'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useInfiniteScrollSentinel } from '@/hooks/useInfiniteScrollSentinel'
 import { usePokemonList } from '@/hooks/usePokemonList'
+import { getDefaultStatRanges } from '@/lib/statFilters'
 
 const SKELETON_COUNT = 8
 const SKELETON_KEYS = Array.from(
@@ -16,9 +21,23 @@ const SKELETON_KEYS = Array.from(
 export default function PokemonGrid() {
   const [searchInput, setSearchInput] = useState('')
   const debouncedSearch = useDebouncedValue(searchInput, 300)
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([])
+
+  const toggleType = (type: string) => {
+    setSelectedTypes(previous =>
+      previous.includes(type)
+        ? previous.filter(selected => selected !== type)
+        : [...previous, type].sort()
+    )
+  }
+
+  const [statRanges, setStatRanges] = useState<StatRanges>(() =>
+    getDefaultStatRanges()
+  )
+  const debouncedStatRanges = useDebouncedValue(statRanges, 300)
 
   const { error, hasNext, isLoading, items, loadMore, retry } =
-    usePokemonList(debouncedSearch)
+    usePokemonList(debouncedSearch, selectedTypes, debouncedStatRanges)
 
   const sentinelRef = useInfiniteScrollSentinel(
     loadMore,
@@ -29,12 +48,21 @@ export default function PokemonGrid() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4 sm:p-6">
-      <Input
-        onChange={event => setSearchInput(event.target.value)}
-        placeholder="Search by name, type, or description..."
-        type="text"
-        value={searchInput}
-      />
+      <StatFilterButton onChange={setStatRanges} statRanges={statRanges} />
+
+      <div className="flex flex-col gap-3">
+        <Input
+          onChange={event => setSearchInput(event.target.value)}
+          placeholder="Search by name, type, or description..."
+          type="text"
+          value={searchInput}
+        />
+        <TypeFilterPills
+          onClear={() => setSelectedTypes([])}
+          onToggle={toggleType}
+          selectedTypes={selectedTypes}
+        />
+      </div>
 
       {error && (
         <div className="border-destructive/50 text-destructive flex flex-col items-center gap-2 rounded-md border p-6 text-center text-sm">
@@ -51,9 +79,7 @@ export default function PokemonGrid() {
 
       {!error && !isInitialLoad && items.length === 0 && (
         <p className="text-muted-foreground py-12 text-center text-sm">
-          {debouncedSearch
-            ? `No Pokemon found for "${debouncedSearch}".`
-            : 'No Pokemon found.'}
+          {getEmptyMessage(debouncedSearch, selectedTypes)}
         </p>
       )}
 
@@ -84,4 +110,13 @@ export default function PokemonGrid() {
       )}
     </div>
   )
+}
+
+function getEmptyMessage(search: string, types: string[]) {
+  const typeList = types.length > 0 ? types.join(', ') : ''
+
+  if (search && typeList) return `No Pokemon found for "${search}" in ${typeList}.`
+  if (search) return `No Pokemon found for "${search}".`
+  if (typeList) return `No Pokemon found in ${typeList}.`
+  return 'No Pokemon found.'
 }
