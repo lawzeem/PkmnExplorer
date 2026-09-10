@@ -34,7 +34,7 @@ export function StatFilterButton({
     <>
       <button
         aria-label="Filter by stats"
-        className="bg-primary text-primary-foreground fixed bottom-6 left-6 z-40 flex size-14 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105"
+        className="bg-primary text-primary-foreground fixed right-6 bottom-6 z-40 flex size-14 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105"
         onClick={() => setIsOpen(true)}
         type="button"
       >
