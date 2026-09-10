@@ -102,6 +102,10 @@ Endpoint for fetching Pokemon with pagination and conditional search functionali
 - `page` (number): Page number for pagination (default: 1)
 - `limit` (number): Items per page (default: 20)
 - `search` (string): Optional search term for filtering by name, type, or description
+- `type` (string): Optional comma-separated list of types to filter by (e.g. `Fire,Water`). A Pokemon matches if it has any of the listed types
+- `{stat}Min` / `{stat}Max` (number): Optional range filters, where `{stat}` is one of `generation`, `height`, `weight`, `hp`, `attack`, `defense`, `speed` (e.g. `attackMin=50&attackMax=120`)
+- `sortBy` (string): Optional field to sort by, one of the same 7 stat fields above
+- `sortOrder` (string): Sort direction when `sortBy` is set, `asc` (default) or `desc`
 
 **Response:**
 
@@ -124,3 +128,4 @@ Endpoint for fetching Pokemon with pagination and conditional search functionali
 - `GET /api/pokemon?page=1&limit=20` - First 20 Pokemon
 - `GET /api/pokemon?search=fire&page=1&limit=15` - Search for fire-type Pokemon with pagination
 - `GET /api/pokemon?search=dragon&page=2&limit=10` - Second page of dragon Pokemon search results
+- `GET /api/pokemon?type=Fire,Water&page=1&limit=20` - Pokemon that are Fire or Water type
